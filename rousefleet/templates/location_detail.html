@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}{{ title | default('Service Location Details', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 location-detail-page">
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            Could not load service location details. The location may not exist or an error occurred.
+        </div>
+        <a href="{{ url_for('service_locations_list') }}" class="btn btn-primary">Back to Locations List</a>
+    {% elif location %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">
+                Service Location: {{ location.name | default('N/A', true) }}
+            </h1>
+            {# Optional: Add an edit button or other actions #}
+        </div>
+        <hr>
+
+        <div class="row">
+            <div class="col-lg-5 col-md-12 mb-3">
+                <h4>Location Information</h4>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> {{ location.name | default('N/A', true) }}</li>
+                            <li>
+                                <strong>Address:</strong><br>
+                                {{ location.address | default('N/A', true) }}<br>
+                                {{ location.city | default('', true) }}{% if location.city and location.state_province %},{% endif %} {{ location.state_province | default('', true) }} {{ location.postal_code | default('', true) }}<br>
+                                {{ location.country | default('', true) }}
+                            </li>
+                            <li><strong>Capacity:</strong> {{ location.capacity | default('N/A', true) }} units</li>
+                            <li><strong>Record Created:</strong> {{ location.create_time | humanize_datetime if location.create_time else 'N/A' }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Map</h4>
+                {% if location.latitude is not none and location.longitude is not none and Maps_api_key %}
+                    <div id="serviceLocationMap"
+                         style="height: 300px; width: 100%;"
+                         data-latitude="{{ location.latitude | float }}"
+                         data-longitude="{{ location.longitude | float }}"
+                         data-location-name="{{ location.name | e }}"
+                         data-location-address="{{ location.address | default('', true) | e }}">
+                    </div>
+                {% elif Maps_api_key %}
+                    <p class="text-muted"><em>Location coordinates not available for map display.</em></p>
+                {% else %}
+                    <p class="text-warning"><em>Map display unavailable (Google Maps API Key not configured).</em></p>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-7 col-md-12">
+                <h4>Equipment Based Here ({{ equipment_at_location|length }})</h4>
+                {% if equipment_at_location %}
+                    <div class="row row-cols-1 row-cols-md-2 g-3"> {# Adjust columns as needed #}
+                        {% for equip_item in equipment_at_location %}
+                            <div class="col">
+                                {# The equipment_at_location items have: equipment_id, serial_number, description, make, model, category, subcategory #}
+                                {# render_equipment_card will show N/A for fields not present in equip_item (like meter_hours, photo_url etc.) #}
+                                {{ macros.render_equipment_card(equip_item, show_links=True) }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-light" role="alert">
+                        No equipment currently listed at this service location.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ url_for('service_locations_list') }}" class="btn btn-secondary">&laquo; Back to Locations List</a>
+        </div>
+
+    {% else %}
+        {# This case should ideally be caught by abort(404) in app.py #}
+        <div class="alert alert-warning" role="alert">
+            Service Location data could not be loaded or the location was not found.
+        </div>
+        <a href="{{ url_for('service_locations_list') }}" class="btn btn-primary">Back to Locations List</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if location and location.latitude is not none and location.longitude is not none and Maps_api_key %}
+<script>
+    let serviceMap;
+    function initServiceMap() {
+        const mapDiv = document.getElementById("serviceLocationMap");
+        if (!mapDiv) {
+            console.error("Map div #serviceLocationMap not found!");
+            return;
+        }
+
+        const lat = parseFloat(mapDiv.dataset.latitude);
+        const lng = parseFloat(mapDiv.dataset.longitude);
+        const locationName = mapDiv.dataset.locationName;
+        const locationAddress = mapDiv.dataset.locationAddress;
+
+        if (isNaN(lat) || isNaN(lng)) {
+            console.error("Invalid latitude or longitude for service location map from data attributes.");
+            mapDiv.innerHTML = '<p class="text-danger p-3">Error: Invalid location data for map.</p>';
+            return;
+        }
+
+        const locCoord = { lat: lat, lng: lng };
+
+        serviceMap = new google.maps.Map(mapDiv, {
+            center: locCoord,
+            zoom: 15, // Zoom a bit more for a specific location
+        });
+
+        const marker = new google.maps.Marker({
+            position: locCoord,
+            map: serviceMap,
+            title: locationName
+        });
+
+        const infowindowContent = `
+            <h6>${locationName}</h6>
+            <p>${locationAddress}</p>`;
+
+        const infowindow = new google.maps.InfoWindow({
+            content: infowindowContent
+        });
+
+        marker.addListener('click', () => {
+            infowindow.open(serviceMap, marker);
+        });
+    }
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ Maps_api_key }}&callback=initServiceMap"></script>
+{% endif %}
+{% endblock %}

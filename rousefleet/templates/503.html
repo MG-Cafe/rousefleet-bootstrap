@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Service Unavailable - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-dark">
+                    {# Using Font Awesome icon placeholder. Include Font Awesome in base.html for this. #}
+                    <h1 class="display-1"><i class="fas fa-tools"></i> 503</h1>
+                </div>
+                <div class="card-body">
+                    <h2 class="card-title text-warning">Service Temporarily Unavailable</h2>
+                    <p class="card-text">
+                        We're sorry, but the server is temporarily unable to handle your request due to maintenance or capacity issues.
+                    </p>
+                    <p class="card-text">
+                        Please try again in a few moments.
+                    </p>
+                    <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-home"></i> Go to Fleet Overview
+                    </a>
+                    <button class="btn btn-outline-secondary mt-3 ms-2" onclick="window.location.reload();">
+                        <i class="fas fa-sync-alt"></i> Try Again
+                    </button>
+                </div>
+                <div class="card-footer text-muted">
+                    We appreciate your patience.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{#
+   If you decide to use Font Awesome icons as shown above (e.g., fas fa-tools, fas fa-home, fas fa-sync-alt),
+   ensure Font Awesome is included in your base.html or linked here.
+   Example: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+#}
+<script>
+    // console.log("503 Service Unavailable page loaded.");
+</script>
+{% endblock %}

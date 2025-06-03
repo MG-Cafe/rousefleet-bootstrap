@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}{{ title }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">{{ title | default('Equipment Fleet Overview', true) }}</h1>
+        {# Optional: Add a button to add new equipment if you implement that functionality #}
+        {# <a href="{{ url_for('add_equipment_page') }}" class="btn btn-success">Add New Equipment</a> #}
+    </div>
+    <hr>
+
+    {% if equipment_list %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {# Loop through each piece of equipment and render its card #}
+            {% for item in equipment_list %}
+                <div class="col">
+                    {{ macros.render_equipment_card(item, show_links=True) }}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No equipment found in the fleet or data could not be loaded.
+        </div>
+    {% endif %}
+
+    {# Example of a potential sidebar area (if you want to adapt the old layout) #}
+    {#
+    <div class="row mt-4">
+        <div class="col-md-8">
+             Above equipment list would go here 
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Quick Stats
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Total Equipment: {{ equipment_list|length }}</li>
+                    <li class="list-group-item">Placeholder for other stats...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    #}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# Add any page-specific JavaScript here if needed #}
+<script>
+    // Example: console.log("Fleet index page loaded.");
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h1 class="display-1"><i class="fas fa-exclamation-triangle"></i> 404</h1>
+                </div>
+                <div class="card-body">
+                    <h2 class="card-title">Page Not Found</h2>
+                    <p class="card-text">
+                        We're sorry, but the page you are looking for does not exist or may have been moved.
+                    </p>
+                    <p class="card-text">
+                        Please check the URL for any typos or navigate back to safety.
+                    </p>
+                    <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-home"></i> Go to Fleet Overview
+                    </a>
+                </div>
+                <div class="card-footer text-muted">
+                    If you believe this is an error, please contact support.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# You might want to add Font Awesome if you use icons like above, e.g., in your base.html or here #}
+{# <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> #}
+<script>
+    // console.log("404 Page Not Found loaded.");
+</script>
+{% endblock %}

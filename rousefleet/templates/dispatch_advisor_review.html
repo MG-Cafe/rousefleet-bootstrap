@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title | default('Review Dispatch Recommendation', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+{# Hidden script tags to pass initial data from Flask to JavaScript #}
+<script id="initial-recommendation-data" type="application/json">
+    {{ recommendation | tojson | safe if recommendation else 'null' }}
+</script>
+<script id="initial-is-error-flag" type="application/json">
+    {{ is_error_plan | tojson | safe }}
+</script>
+
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">{{ title | default('Review Dispatch Recommendation', true) }}</h1>
+    </div>
+    <hr>
+
+    <div class="row">
+        <div class="col-md-7 col-lg-7 mb-3">
+            <h4>Recommendation Details</h4>
+            <div id="recommendationDetailsCard" class="card shadow-sm" style="display: none;"> <div class="card-header bg-light">
+                    <h5 class="mb-0" id="recommendationEquipmentName">Generating Recommendation...</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recommendationContent">
+                        <p><strong>Status:</strong> <span id="recommendationStatus" class="text-info">Processing...</span></p>
+                        <div id="recommendationEquipmentInfo" style="display:none;">
+                            <p class="mb-1"><strong>Recommended Equipment:</strong> <span id="recEqDescription"></span> (SN: <span id="recEqSN"></span>)</p>
+                            <p class="mb-1"><strong>Make/Model:</strong> <span id="recEqMakeModel"></span></p>
+                            <p class="mb-1"><strong>Current Location (Simulated):</strong> <span id="recEqCity"></span></p>
+                            <p class="mb-1"><strong>Meter Hours (Simulated):</strong> <span id="recEqHours"></span> hrs</p>
+                        </div>
+                        <p class="mt-2"><strong>Reasoning:</strong> <span id="recommendationReasoning">Waiting for agent analysis...</span></p>
+                        <p><strong>Estimated Availability (Simulated):</strong> <span id="recommendationAvailability">Calculating...</span></p>
+                    </div>
+
+                    <div id="originalJobParams" class="mt-3 p-2 bg-light border rounded" style="display:none;">
+                        <h6>Original Job Request:</h6>
+                        <small>
+                            <ul class="list-unstyled mb-0">
+                                <li><strong>Date:</strong> <span id="jobParamDate"></span></li>
+                                <li><strong>Location:</strong> <span id="jobParamLocation"></span></li>
+                                <li><strong>Category:</strong> <span id="jobParamCategory"></span></li>
+                                <li><strong>Make:</strong> <span id="jobParamMake"></span></li>
+                                <li><strong>Duration:</strong> <span id="jobParamDuration"></span> days</li>
+                            </ul>
+                        </small>
+                    </div>
+
+                    <form id="confirmDispatchForm" method="POST" action="{{ url_for('fleet_advisor.confirm_dispatch_action') }}" class="mt-3">
+                        <input type="hidden" name="confirmed_recommendation_json" id="confirmedRecommendationJsonInput">
+                        <button type="submit" class="btn btn-success" id="confirmDispatchButton" disabled>Confirm and Proceed with Dispatch</button>
+                        <a href="{{ url_for('fleet_advisor.dispatch_advisor_form_page') }}" class="btn btn-outline-secondary ms-2">Cancel & Refine Request</a>
+                    </form>
+                </div>
+            </div>
+
+            <div id="recommendationLoadingState" class="alert alert-info">
+                <p><img src="{{ url_for('static', filename='loading.gif') }}" alt="Loading..." style="width:24px; height:24px; margin-right: 8px;"> Your dispatch recommendation is being generated. Please wait.</p>
+                <p>You can see the advisor's process in the "Live Log" on the right.</p>
+            </div>
+
+            <div id="recommendationErrorState" class="alert alert-danger" style="display: none;">
+                <h4>Recommendation Generation Failed</h4>
+                <p id="recommendationErrorMessage"></p>
+                <p><strong>Agent's raw output/details (if any):</strong></p>
+                <pre><code id="recommendationErrorRawOutput" style="white-space: pre-wrap; word-break: break-all;"></code></pre>
+                <a href="{{ url_for('fleet_advisor.dispatch_advisor_form_page') }}" class="btn btn-primary mt-3">Try Again</a>
+            </div>
+        </div>
+
+        <div class="col-md-5 col-lg-5">
+            <h4>Advisor's Process (Live Log)</h4>
+            <div class="card shadow-sm">
+                <div class="card-body" id="agentThoughtsStreamContainer" style="max-height: 600px; overflow-y: auto; font-size: 0.85em; background-color: #f8f9fa;">
+                    <ul class="list-unstyled mb-0" id="agentThoughtsStreamList">
+                        </ul>
+                    <p id="thoughtsPlaceholder" class="text-muted">Waiting for advisor to start processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const thoughtsStreamList = document.getElementById('agentThoughtsStreamList');
+    const thoughtsPlaceholder = document.getElementById('thoughtsPlaceholder');
+
+    const recommendationDetailsCard = document.getElementById('recommendationDetailsCard');
+    const recommendationLoadingState = document.getElementById('recommendationLoadingState');
+    const recommendationErrorState = document.getElementById('recommendationErrorState');
+
+    const recEquipmentName = document.getElementById('recommendationEquipmentName');
+    const recStatus = document.getElementById('recommendationStatus');
+    const recEquipmentInfo = document.getElementById('recommendationEquipmentInfo');
+    const recEqDescription = document.getElementById('recEqDescription');
+    const recEqSN = document.getElementById('recEqSN');
+    const recEqMakeModel = document.getElementById('recEqMakeModel');
+    const recEqCity = document.getElementById('recEqCity');
+    const recEqHours = document.getElementById('recEqHours');
+    const recReasoning = document.getElementById('recommendationReasoning');
+    const recAvailability = document.getElementById('recommendationAvailability');
+
+    const originalJobParamsDiv = document.getElementById('originalJobParams');
+    const jobParamDate = document.getElementById('jobParamDate');
+    const jobParamLocation = document.getElementById('jobParamLocation');
+    const jobParamCategory = document.getElementById('jobParamCategory');
+    const jobParamMake = document.getElementById('jobParamMake');
+    const jobParamDuration = document.getElementById('jobParamDuration');
+
+    const confirmDispatchButton = document.getElementById('confirmDispatchButton');
+    const confirmedRecommendationJsonInput = document.getElementById('confirmedRecommendationJsonInput');
+
+    const recErrorMessage = document.getElementById('recommendationErrorMessage');
+    const recErrorRawOutput = document.getElementById('recommendationErrorRawOutput');
+
+    // Read initial data passed from Flask using script tags
+    let initialRecommendation = null;
+    try {
+        const initialRecDataElement = document.getElementById('initial-recommendation-data');
+        if (initialRecDataElement) initialRecommendation = JSON.parse(initialRecDataElement.textContent);
+    } catch (e) {
+        console.error("Error parsing initial recommendation data:", e);
+    }
+
+    let initialIsError = false;
+    try {
+        const initialIsErrorFlagElement = document.getElementById('initial-is-error-flag');
+        if (initialIsErrorFlagElement) initialIsError = JSON.parse(initialIsErrorFlagElement.textContent);
+    } catch (e) {
+        console.error("Error parsing initial error flag:", e);
+    }
+
+
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+            if (unsafe === null || typeof unsafe === 'undefined') return '';
+            unsafe = String(unsafe);
+        }
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function updateRecommendationUI(data) {
+        if (recommendationLoadingState) recommendationLoadingState.style.display = 'none';
+        if (recommendationErrorState) recommendationErrorState.style.display = 'none';
+        if (recommendationDetailsCard) recommendationDetailsCard.style.display = 'block';
+
+        const eqDetails = data.equipment_details || {};
+        if (recEquipmentName) recEquipmentName.innerHTML = `Recommendation: ${escapeHtml(eqDetails.make || '')} ${escapeHtml(eqDetails.model || '')} <small class="text-muted">(SN: ${escapeHtml(eqDetails.serial_number || 'N/A')})</small>`;
+        if (recStatus) {
+            recStatus.textContent = "Recommendation Complete";
+            recStatus.className = "text-success fw-bold";
+        }
+        if (recEquipmentInfo) recEquipmentInfo.style.display = 'block';
+
+        if (recEqDescription) recEqDescription.textContent = escapeHtml(eqDetails.description || 'N/A');
+        if (recEqSN) recEqSN.textContent = escapeHtml(eqDetails.serial_number || 'N/A'); // Also in header
+        if (recEqMakeModel) recEqMakeModel.textContent = `${escapeHtml(eqDetails.make || '')} ${escapeHtml(eqDetails.model || '')}`;
+        if (recEqCity) recEqCity.textContent = escapeHtml(eqDetails.current_city || 'N/A');
+        if (recEqHours) recEqHours.textContent = escapeHtml(eqDetails.meter_hours !== undefined ? eqDetails.meter_hours : 'N/A');
+
+        if (recReasoning) recReasoning.textContent = escapeHtml(data.reasoning || 'N/A');
+        if (recAvailability) recAvailability.textContent = escapeHtml(data.estimated_availability || 'N/A');
+
+        const jobParams = data.job_parameters || {};
+        if (originalJobParamsDiv) originalJobParamsDiv.style.display = 'block';
+        if (jobParamDate) jobParamDate.textContent = escapeHtml(jobParams.job_date || 'N/A');
+        if (jobParamLocation) jobParamLocation.textContent = escapeHtml(jobParams.job_location || 'N/A');
+        if (jobParamCategory) jobParamCategory.textContent = escapeHtml(jobParams.equipment_category || 'N/A');
+        if (jobParamMake) jobParamMake.textContent = escapeHtml(jobParams.equipment_make || 'Any');
+        if (jobParamDuration) jobParamDuration.textContent = escapeHtml(jobParams.duration_days || 'N/A');
+
+        if (confirmedRecommendationJsonInput) confirmedRecommendationJsonInput.value = JSON.stringify(data);
+        if (confirmDispatchButton) confirmDispatchButton.disabled = false;
+    }
+
+    function handleStreamError(errorData) {
+        if (recommendationLoadingState) recommendationLoadingState.style.display = 'none';
+        if (recommendationDetailsCard) recommendationDetailsCard.style.display = 'none';
+        if (recommendationErrorState) recommendationErrorState.style.display = 'block';
+
+        if (recErrorMessage) recErrorMessage.textContent = escapeHtml(errorData.message || "An unknown error occurred during recommendation generation.");
+        if (recErrorRawOutput) recErrorRawOutput.textContent = escapeHtml(errorData.raw_output || errorData.code || "");
+
+        if (thoughtsPlaceholder && thoughtsPlaceholder.style.display !== 'none') {
+            thoughtsPlaceholder.innerHTML = `<span class="text-danger">Processing failed. See details on the left.</span>`;
+        }
+        if (confirmDispatchButton) confirmDispatchButton.disabled = true;
+    }
+
+    let eventSource = null; // Declare eventSource here to control its lifecycle
+
+    if (initialRecommendation) {
+        if (initialIsError) {
+            console.log("JS: Page loaded with error data from initial data script tag.");
+            handleStreamError(initialRecommendation); // initialRecommendation here is the error object
+        } else {
+            console.log("JS: Page loaded with completed recommendation data from initial data script tag.");
+            updateRecommendationUI(initialRecommendation);
+        }
+        if (recommendationLoadingState) recommendationLoadingState.style.display = 'none';
+    } else {
+        // Only connect to SSE if there's no initial data (i.e., it's not a page reload after completion/error)
+        eventSource = new EventSource("{{ url_for('fleet_advisor.stream_dispatch_recommendation') }}");
+        console.log("SSE (Recommendation): EventSource created for URL: {{ url_for('fleet_advisor.stream_dispatch_recommendation') }}");
+
+        eventSource.onopen = function() {
+            console.log("SSE (Recommendation): Connection opened.");
+            if (thoughtsPlaceholder) thoughtsPlaceholder.textContent = "Advisor connection established. Waiting for process updates...";
+        };
+
+        eventSource.addEventListener('thought', function(event) {
+            console.log("SSE (Recommendation): 'thought' event received, data:", event.data);
+            if (thoughtsPlaceholder && thoughtsPlaceholder.style.display !== 'none') {
+                thoughtsPlaceholder.style.display = 'none';
+            }
+            const thoughtData = JSON.parse(event.data);
+            const li = document.createElement('li');
+            li.innerHTML = `<small class="text-muted">${new Date().toLocaleTimeString()}: ${escapeHtml(thoughtData)}</small>`;
+            if (thoughtsStreamList) thoughtsStreamList.appendChild(li);
+            const thoughtsContainer = document.getElementById('agentThoughtsStreamContainer');
+            if (thoughtsContainer) thoughtsContainer.scrollTop = thoughtsContainer.scrollHeight;
+        });
+
+        eventSource.addEventListener('recommendation_complete', function(event) {
+            console.log("SSE (Recommendation): 'recommendation_complete' event received, data:", event.data);
+            const recommendationData = JSON.parse(event.data);
+            updateRecommendationUI(recommendationData);
+        });
+
+        eventSource.addEventListener('error', function(event) {
+            console.error("SSE (Recommendation): 'error' event (or native SSE error) received:", event);
+            let errorData;
+            if (event.data) {
+                try { errorData = JSON.parse(event.data); }
+                catch (e) { errorData = { message: "A streaming error occurred, and error data was not valid JSON.", raw_output: event.data }; }
+            } else { errorData = { message: "Connection to advisor service lost or an unexpected error occurred." }; }
+            handleStreamError(errorData);
+        });
+
+        eventSource.addEventListener('stream_end', function(event) {
+            console.log("SSE (Recommendation): 'stream_end' event received. Closing connection.");
+            if (eventSource) eventSource.close();
+            if (recommendationLoadingState && recommendationLoadingState.style.display !== 'none' &&
+                (!recommendationDetailsCard || recommendationDetailsCard.style.display === 'none') &&
+                (!recommendationErrorState || recommendationErrorState.style.display === 'none')) {
+                if (thoughtsPlaceholder) thoughtsPlaceholder.textContent = "Advisor stream ended without a final recommendation or error.";
+                handleStreamError({message: "The recommendation process ended unexpectedly. Please try again."});
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

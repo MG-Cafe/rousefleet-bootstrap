@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title | default('Dispatch Advisor', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ title | default('Optimal Equipment Dispatch Advisor', true) }}</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Please provide the details of your job requirements below.
+                        The advisor will help identify suitable equipment for dispatch.
+                    </p>
+                    <hr>
+
+                    {# Flashed messages for form validation errors from previous attempts will appear here #}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('fleet_advisor.submit_dispatch_request') }}">
+                        {# Include CSRF token if your Flask app uses it (e.g., with Flask-WTF) #}
+                        {# {{ csrf_token() }} #}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="job_date" class="form-label"><strong>Required Job Start Date:</strong></label>
+                                <input type="date" class="form-control" id="job_date" name="job_date" value="{{ current_date }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="duration_days" class="form-label"><strong>Job Duration (days):</strong></label>
+                                <input type="number" class="form-control" id="duration_days" name="duration_days" min="1" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="job_location" class="form-label"><strong>Job Location (e.g., City, Site Name):</strong></label>
+                            <input type="text" class="form-control" id="job_location" name="job_location" placeholder="Enter job site or city" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="equipment_category" class="form-label"><strong>Required Equipment Category:</strong></label>
+                                <select class="form-select" id="equipment_category" name="equipment_category" required>
+                                    <option value="" disabled selected>Select Category...</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category }}">{{ category }}</option>
+                                    {% else %}
+                                        <option value="" disabled>No categories available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="equipment_make" class="form-label"><strong>Preferred Equipment Make (Optional):</strong></label>
+                                <select class="form-select" id="equipment_make" name="equipment_make">
+                                    <option value="">Any Make</option>
+                                    {% for make in makes %}
+                                        <option value="{{ make }}">{{ make }}</option>
+                                    {% else %}
+                                        <option value="" disabled>No makes available</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label"><strong>Additional Notes or Requirements:</strong></label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="e.g., Specific attachments needed, ground conditions, etc."></textarea>
+                        </div>
+
+                        <hr>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Find Suitable Equipment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# Add any page-specific JavaScript here if needed, e.g., for date picker enhancements #}
+<script>
+    // Example: console.log("Dispatch advisor form page loaded.");
+    // You could add JS to dynamically update makes based on selected category if desired.
+</script>
+{% endblock %}

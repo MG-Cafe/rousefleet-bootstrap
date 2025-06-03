@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}{{ title | default('All Customers', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">{{ title | default('Our Customers', true) }}</h1>
+        {# Optional: Add a button to add a new customer if you implement that functionality #}
+        {# <a href="{{ url_for('add_customer_page') }}" class="btn btn-success">Add New Customer</a> #}
+    </div>
+    <hr>
+
+    {% if customers %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {# Loop through each customer and render their card #}
+            {% for customer_item in customers %}
+                <div class="col">
+                    {{ macros.render_customer_card(customer_item, show_links=True) }}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No customers found or data could not be loaded.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# Add any page-specific JavaScript here if needed #}
+<script>
+    // Example: console.log("Customers list page loaded.");
+</script>
+{% endblock %}

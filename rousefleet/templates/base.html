@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Rouse FleetPro{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head_extra %}{% endblock %} {# For additional CSS or meta tags per page #}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light fixed-top bg-white" style="border-bottom: 1px solid #dadce0;">
+      <div class="container-fluid main-content-area"> {# Apply max-width here #}
+        {# --- MODIFIED: Navbar Brand --- #}
+        <a class="navbar-brand" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="Rouse FleetPro Logo" style="height: 40px; width: auto; vertical-align: middle;">
+          {# Optionally, you can add the text next to it or remove the <strong> tag #}
+          <strong style="margin-left: 8px;">Rouse FleetPro</strong>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            <li class="nav-item">
+              {# --- MODIFIED: Home link refers to the main equipment list/dashboard --- #}
+              <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}" aria-current="page" href="{{ url_for('home') }}">Equipment Fleet</a>
+            </li>
+            {# --- MODIFIED: FleetPro specific navigation links --- #}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'customers_list' or request.blueprint == 'customer_detail' %}active{% endif %}" href="{{ url_for('customers_list') }}">Customers</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'service_locations_list' or request.blueprint == 'service_location_detail' %}active{% endif %}" href="{{ url_for('service_locations_list') }}">Service Locations</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.blueprint == 'fleet_advisor' %}active{% endif %}" href="{{ url_for('fleet_advisor.dispatch_advisor_form_page') }}">Dispatch Advisor</a>
+            </li>
+          </ul>
+          <span class="navbar-text ms-auto">
+            {# Replace with actual user info if authentication is added #}
+            {# <img src="{{ url_for('static', filename='user_avatar_placeholder.png') }}" alt="User Avatar" style="height: 30px; border-radius: 50%; margin-right: 5px;"> #}
+            User
+          </span>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container-fluid main-content-area" style="padding-top: 20px;"> {# Added padding-top here since body padding-top adjusted navbar #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}
+        {# Child templates will fill this block #}
+        {% endblock %}
+    </main>
+
+    <footer class="container-fluid main-content-area text-center mt-5 mb-3">
+        <hr>
+        <small class="text-muted">&copy; {{ now.year if now else 2024 }} Rouse FleetPro Application. All rights reserved.</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    {% block scripts %}
+    {# Child templates can add their specific JS here #}
+    {% endblock scripts %}
+  </body>
+</html>

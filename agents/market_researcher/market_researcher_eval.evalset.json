@@ -1,0 +1,77 @@
+[
+  {
+    "name": "excavator_auction_prices_tx",
+    "data": [
+      {
+        "query": "Research current auction prices for 20-ton hydraulic excavators, make Caterpillar, model 320 (or similar like 320F), year range 2019-2021, in Texas, USA. I need about 2-3 findings.",
+        "expected_tool_use": [],
+        "expected_intermediate_agent_responses": [
+          {
+            "author": "equipment_market_research_agent",
+            "text": "Okay, I will research current auction prices for 20-ton Caterpillar 320 excavators (2019-2021) in Texas. I'll aim for 2-3 findings."
+          },
+          {
+            "author": "equipment_market_research_agent",
+            "text": "Using google_search to find recent auction results and heavy equipment marketplace listings..."
+          }
+        ],
+        "reference": "```json\n{\n  \"research_query_summary\": {\n    \"equipment_description_searched\": \"20-ton hydraulic excavator\",\n    \"make_filter_used\": \"Caterpillar\",\n    \"model_filter_used\": \"320 (or similar like 320F)\",\n    \"year_filter_used\": \"2019-2021\",\n    \"region_focus\": \"Texas, USA\",\n    \"research_topic\": \"current auction prices\"\n  },\n  \"market_findings\": [\n    {\n      \"finding_type\": \"Auction Price\",\n      \"source_url\": \"[https://www.exampleauctionresults.com/cat320-tx-lot123](https://www.google.com/search?q=https://www.exampleauctionresults.com/cat320-tx-lot123)\",\n      \"source_description\": \"[ExampleAuctionResults.com](https://www.google.com/search?q=ExampleAuctionResults.com) - Recent Sale\",\n      \"details\": \"2019 Caterpillar 320 with approx. 3500 hours sold for $82,000.\",\n      \"observed_date_or_period\": \"May 15, 2025\",\n      \"region_applicability\": \"Specific to queried region (Texas auction)\"\n    },\n    {\n      \"finding_type\": \"Auction Price Listing\",\n      \"source_url\": \"[https://www.examplemachinerymarket.com/listings/cat-320-2020-texas](https://www.google.com/search?q=https://www.examplemachinerymarket.com/listings/cat-320-2020-texas)\",\n      \"source_description\": \"[ExampleMachineryMarket.com](https://www.google.com/search?q=ExampleMachineryMarket.com) - Current Listing\",\n      \"details\": \"2020 Caterpillar 320F listed for auction, starting bid $78,000, estimated value $85,000-$95,000. Located in Dallas, TX.\",\n      \"observed_date_or_period\": \"Accessed May 27, 2025\",\n      \"region_applicability\": \"Specific to queried region (Dallas, TX)\"\n    }\n  ],\n  \"overall_summary\": \"Recent auction data for 2019-2021 Caterpillar 320 excavators in Texas indicates sale prices around $82,000, with listings suggesting values between $78,000 and $95,000 depending on condition and hours.\"\n}\n```"
+      }
+    ],
+    "initial_session": {
+      "state": {},
+      "app_name": "market_research_app",
+      "user_id": "user_fleet_eval"
+    }
+  },
+  {
+    "name": "boomlift_rental_rates_ca",
+    "data": [
+      {
+        "query": "What are the average monthly rental rates for 40-45ft articulating boom lifts, specifically JLG models, in Southern California? Provide 2 findings.",
+        "expected_tool_use": [],
+        "expected_intermediate_agent_responses": [
+          {
+            "author": "equipment_market_research_agent",
+            "text": "Understood. I'm looking for average monthly rental rates for JLG 40-45ft articulating boom lifts in Southern California."
+          },
+          {
+            "author": "equipment_market_research_agent",
+            "text": "Searching rental company websites and equipment rental aggregators..."
+          }
+        ],
+        "reference": "```json\n{\n  \"research_query_summary\": {\n    \"equipment_description_searched\": \"40-45ft articulating boom lift\",\n    \"make_filter_used\": \"JLG\",\n    \"model_filter_used\": \"Any\",\n    \"year_filter_used\": \"Any recent\",\n    \"region_focus\": \"Southern California\",\n    \"research_topic\": \"average monthly rental rates\"\n  },\n  \"market_findings\": [\n    {\n      \"finding_type\": \"Rental Rate Estimate\",\n      \"source_url\": \"[https://www.examplerentalsocal.com/jlg-450aj-rates](https://www.google.com/search?q=https://www.examplerentalsocal.com/jlg-450aj-rates)\",\n      \"source_description\": \"[ExampleRentalSoCal.com](https://www.google.com/search?q=ExampleRentalSoCal.com) - JLG 450AJ Rates\",\n      \"details\": \"JLG 450AJ (45ft articulating boom) listed with monthly rental rates between $2,200 - $2,800 depending on contract length and specific unit condition.\",\n      \"observed_date_or_period\": \"Accessed May 27, 2025\",\n      \"region_applicability\": \"Specific to queried region (Southern California)\"\n    },\n    {\n      \"finding_type\": \"Market Overview Article\",\n      \"source_url\": \"[https://www.exampleequipmentnews.com/aerial-lift-rental-trends-2025](https://www.google.com/search?q=https://www.exampleequipmentnews.com/aerial-lift-rental-trends-2025)\",\n      \"source_description\": \"[ExampleEquipmentNews.com](https://www.google.com/search?q=ExampleEquipmentNews.com) - Rental Trends 2025\",\n      \"details\": \"Industry reports suggest that 40-50ft articulating boom lifts in major Californian metro areas are seeing stable rental demand, with monthly rates generally in the $2,000-$3,000 range for well-maintained units from top brands like JLG.\",\n      \"observed_date_or_period\": \"Published April 2025\",\n      \"region_applicability\": \"General California, including Southern California\"\n    }\n  ],\n  \"overall_summary\": \"For JLG 40-45ft articulating boom lifts in Southern California, monthly rental rates typically range from $2,000 to $3,000. Specific listings for models like the JLG 450AJ fall within $2,200-$2,800.\"\n}\n```"
+      }
+    ],
+    "initial_session": {
+      "state": {},
+      "app_name": "market_research_app",
+      "user_id": "user_fleet_eval"
+    }
+  },
+  {
+    "name": "skidsteer_demand_fl",
+    "data": [
+      {
+        "query": "Find buyer demand indicators for new and used compact track loaders (like Bobcat T66 or similar) in Florida. Give me 2-3 indicators.",
+        "expected_tool_use": [],
+        "expected_intermediate_agent_responses": [
+          {
+            "author": "equipment_market_research_agent",
+            "text": "I will search for market reports and news articles indicating buyer demand for compact track loaders, such as Bobcat models, in Florida."
+          },
+          {
+            "author": "equipment_market_research_agent",
+            "text": "Using google_search to find reports on construction activity and equipment sales trends in Florida..."
+          }
+        ],
+        "reference": "```json\n{\n  \"research_query_summary\": {\n    \"equipment_description_searched\": \"compact track loaders\",\n    \"make_filter_used\": \"Bobcat (or similar)\",\n    \"model_filter_used\": \"T66 (or similar)\",\n    \"year_filter_used\": \"New and Used\",\n    \"region_focus\": \"Florida, USA\",\n    \"research_topic\": \"buyer demand indicators\"\n  },\n  \"market_findings\": [\n    {\n      \"finding_type\": \"Demand Indicator - News\",\n      \"source_url\": \"[https://www.constructionfloridanews.com/q1-report](https://www.google.com/search?q=https://www.constructionfloridanews.com/q1-report)\",\n      \"source_description\": \"[ConstructionFloridaNews.com](https://www.google.com/search?q=ConstructionFloridaNews.com) - Q1 Report\",\n      \"details\": \"Florida's construction sector saw a 7% year-over-year growth in Q1 2025, with significant increases in residential and light commercial projects, driving demand for versatile compact equipment like track loaders.\",\n      \"observed_date_or_period\": \"Q1 2025\",\n      \"region_applicability\": \"Specific to queried region (Florida)\"\n    },\n    {\n      \"finding_type\": \"Demand Indicator - Dealer Sentiment\",\n      \"source_url\": \"[https://www.exampledealersurvey.com/compact-equipment-outlook](https://www.google.com/search?q=https://www.exampledealersurvey.com/compact-equipment-outlook)\",\n      \"source_description\": \"[ExampleDealerSurvey.com](https://www.google.com/search?q=ExampleDealerSurvey.com) - Compact Outlook\",\n      \"details\": \"A recent survey of Florida equipment dealers highlighted strong customer interest and pre-orders for new compact track loaders, with Bobcat and Caterpillar models being particularly sought after for landscaping and small-to-medium contracting jobs.\",\n      \"observed_date_or_period\": \"May 2025\",\n      \"region_applicability\": \"Specific to queried region (Florida)\"\n    },\n    {\n      \"finding_type\": \"Market Trend\",\n      \"source_url\": \"[https://www.usedequipmenttrends.com/ctl-market-watch](https://www.google.com/search?q=https://www.usedequipmenttrends.com/ctl-market-watch)\",\n      \"source_description\": \"[UsedEquipmentTrends.com](https://www.google.com/search?q=UsedEquipmentTrends.com) - CTL Market Watch\",\n      \"details\": \"The used market for compact track loaders in the Southeastern US, including Florida, remains robust, with units under 1500 hours holding their value well. Increased online search volume for these units noted.\",\n      \"observed_date_or_period\": \"Last 3 months\",\n      \"region_applicability\": \"Southeastern US, including Florida\"\n    }\n  ],\n  \"overall_summary\": \"Buyer demand for compact track loaders in Florida appears strong, driven by growth in construction. Dealer sentiment is positive, and both new and used markets show robust activity, especially for popular makes like Bobcat.\"\n}\n```"
+      }
+    ],
+    "initial_session": {
+      "state": {},
+      "app_name": "market_research_app",
+      "user_id": "user_fleet_eval"
+    }
+  }
+]

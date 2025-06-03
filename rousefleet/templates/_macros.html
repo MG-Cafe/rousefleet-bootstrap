@@ -1,0 +1,175 @@
+{# templates/_macros.html #}
+
+{% macro render_equipment_card(equipment_item, show_links=True) %}
+{#
+    Renders a card for a piece of equipment.
+    Args:
+        equipment_item (dict): A dictionary containing equipment details.
+                               Expected keys: equipment_id, serial_number, description,
+                                              make, model, model_year, category, subcategory,
+                                              meter_hours, current_city, current_state_province,
+                                              current_customer_name (optional),
+                                              current_service_location_name (optional),
+                                              photo_url (optional).
+        show_links (bool): Whether to make titles and certain fields clickable links.
+#}
+<div class="card equipment-card mb-3">
+    {% if equipment_item.photo_url %}
+        <img src="{{ equipment_item.photo_url }}" class="card-img-top equipment-thumbnail" alt="{{ equipment_item.description | default('Equipment image', true) }}" style="max-height: 200px; object-fit: cover;">
+    {% else %}
+        {# Placeholder image or style if no photo_url is provided #}
+        <div class="equipment-thumbnail-placeholder text-center py-5 bg-light">
+            <span class="text-muted">No Image Available</span>
+        </div>
+    {% endif %}
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            {% if show_links %}
+                <a href="{{ url_for('equipment_detail', equipment_id=equipment_item.equipment_id) }}" class="text-decoration-none">
+                    {{ equipment_item.make | default('N/A', true) }} {{ equipment_item.model | default('N/A', true) }}
+                    {% if equipment_item.model_year %}({{ equipment_item.model_year }}){% endif %}
+                </a>
+            {% else %}
+                {{ equipment_item.make | default('N/A', true) }} {{ equipment_item.model | default('N/A', true) }}
+                {% if equipment_item.model_year %}({{ equipment_item.model_year }}){% endif %}
+            {% endif %}
+        </h5>
+        <small class="text-muted">SN: {{ equipment_item.serial_number | default('N/A', true) }}</small>
+    </div>
+    <div class="card-body">
+        <p class="card-text description-truncate">{{ equipment_item.description | default('No description provided.', true) }}</p>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item px-0">
+                <strong>Category:</strong> {{ equipment_item.category | default('N/A', true) }}
+                {% if equipment_item.subcategory %}({{ equipment_item.subcategory }}){% endif %}
+            </li>
+            <li class="list-group-item px-0">
+                <strong>Meter Hours:</strong> {{ equipment_item.meter_hours | default('N/A', true) | int }} hrs
+            </li>
+            <li class="list-group-item px-0">
+                <strong>Current Location:</strong>
+                {{ equipment_item.current_city | default('N/A', true) }}{% if equipment_item.current_state_province %}, {{ equipment_item.current_state_province }}{% endif %}
+            </li>
+            {% if equipment_item.current_customer_name %}
+            <li class="list-group-item px-0">
+                <strong>Current Customer:</strong>
+                {% if show_links and equipment_item.current_customer_id %}
+                    <a href="{{ url_for('customer_detail', customer_id=equipment_item.current_customer_id) }}">
+                        {{ equipment_item.current_customer_name }}
+                    </a>
+                {% else %}
+                    {{ equipment_item.current_customer_name }}
+                {% endif %}
+            </li>
+            {% endif %}
+            {% if equipment_item.current_service_location_name %}
+            <li class="list-group-item px-0">
+                <strong>Service Depot:</strong>
+                 {% if show_links and equipment_item.current_service_location_id %}
+                    <a href="{{ url_for('service_location_detail', location_id=equipment_item.current_service_location_id) }}">
+                        {{ equipment_item.current_service_location_name }}
+                    </a>
+                {% else %}
+                    {{ equipment_item.current_service_location_name }}
+                {% endif %}
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% if show_links %}
+    <div class="card-footer text-center">
+        <a href="{{ url_for('equipment_detail', equipment_id=equipment_item.equipment_id) }}" class="btn btn-primary btn-sm">View Details</a>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_maintenance_job_item(job, equipment_context=None) %}
+{#
+    Renders an item for a maintenance job.
+    Args:
+        job (dict): A dictionary containing maintenance job details.
+                    Expected keys: job_id, job_date, job_description, cost, service_type.
+        equipment_context (dict, optional): If provided, can link to the equipment.
+                                            Expected: equipment_id, make, model
+#}
+<li class="list-group-item maintenance-job-item">
+    <div class="d-flex w-100 justify-content-between">
+        <h6 class="mb-1">{{ job.service_type | default('Maintenance Activity', true) }}</h6>
+        <small class="text-muted">{{ job.job_date | humanize_datetime if job.job_date else 'Date N/A' }}</small>
+    </div>
+    <p class="mb-1 description-truncate">{{ job.job_description | default('No specific description.', true) }}</p>
+    <small class="text-muted">Cost: ${{ "%.2f"|format(job.cost|float) if job.cost is not none else 'N/A' }}</small>
+    {% if equipment_context and equipment_context.equipment_id %}
+        <small class="text-muted d-block">
+            For: <a href="{{ url_for('equipment_detail', equipment_id=equipment_context.equipment_id) }}">{{ equipment_context.make }} {{ equipment_context.model }} (SN: {{ equipment_context.serial_number }})</a>
+        </small>
+    {% endif %}
+</li>
+{% endmacro %}
+
+{# You can add more macros here for other entities like customers or service locations if needed #}
+
+{% macro render_customer_card(customer, show_links=True) %}
+{#
+    Renders a card for a customer.
+    Args:
+        customer (dict): Dictionary with customer details.
+                         Expected: customer_id, customer_name, industry_type, region
+        show_links (bool): Whether to make name clickable.
+#}
+<div class="card customer-card mb-3">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            {% if show_links %}
+                <a href="{{ url_for('customer_detail', customer_id=customer.customer_id) }}" class="text-decoration-none">
+                    {{ customer.customer_name | default('N/A', true) }}
+                </a>
+            {% else %}
+                {{ customer.customer_name | default('N/A', true) }}
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="card-text mb-1"><strong>Industry:</strong> {{ customer.industry_type | default('N/A', true) }}</p>
+        <p class="card-text"><strong>Region:</strong> {{ customer.region | default('N/A', true) }}</p>
+    </div>
+    {% if show_links %}
+    <div class="card-footer text-center">
+        <a href="{{ url_for('customer_detail', customer_id=customer.customer_id) }}" class="btn btn-secondary btn-sm">View Details</a>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_location_card(location, show_links=True) %}
+{#
+    Renders a card for a service location.
+    Args:
+        location (dict): Dictionary with location details.
+                         Expected: location_id, name, city, state_province, capacity
+        show_links (bool): Whether to make name clickable.
+#}
+<div class="card location-card mb-3">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            {% if show_links %}
+                <a href="{{ url_for('service_location_detail', location_id=location.location_id) }}" class="text-decoration-none">
+                    {{ location.name | default('N/A', true) }}
+                </a>
+            {% else %}
+                {{ location.name | default('N/A', true) }}
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="card-text mb-1"><strong>City:</strong> {{ location.city | default('N/A', true) }}{% if location.state_province %}, {{ location.state_province }}{% endif %}</p>
+        <p class="card-text"><strong>Capacity:</strong> {{ location.capacity | default('N/A', true) }} units</p>
+    </div>
+    {% if show_links %}
+    <div class="card-footer text-center">
+        <a href="{{ url_for('service_location_detail', location_id=location.location_id) }}" class="btn btn-info btn-sm">View Details</a>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

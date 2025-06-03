@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title | default('Dispatch Confirmation Status', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            {# Pass URLs to JavaScript via data attributes to keep script block cleaner #}
+            <div id="dispatchStatusPageData"
+                 data-sse-url="{{ url_for('fleet_advisor.stream_dispatch_post_status') }}"
+                 data-home-url="{{ url_for('home') }}"
+                 data-loading-gif-url="{{ url_for('static', filename='loading.gif') }}">
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h2 class="mb-0">{{ title | default('Dispatch Confirmation Status', true) }}</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Please wait while the system processes your dispatch confirmation.
+                        You can see the live status updates below.
+                    </p>
+                    <hr>
+
+                    <h4>Dispatch Execution Log:</h4>
+                    <div id="dispatchStatusStreamContainer" class="p-2 border rounded bg-light" style="max-height: 400px; overflow-y: auto; font-size: 0.9em;">
+                        <ul class="list-unstyled mb-0" id="dispatchStatusStreamList">
+                            </ul>
+                        <p id="dispatchStatusPlaceholder" class="text-muted mb-0">
+                            {# Initial loading GIF will be set by JS now #}
+                            Initializing dispatch process...
+                        </p>
+                    </div>
+
+                    <div id="dispatchFinalStatus" class="mt-3" style="display: none;">
+                        <hr>
+                        <h5 id="dispatchFinalMessage" class="mb-3"></h5>
+                        <a id="dispatchHomeButton" href="#" class="btn btn-primary">Return to Fleet Overview</a>
+                        <a href="{{ url_for('fleet_advisor.dispatch_advisor_form_page') }}" class="btn btn-outline-secondary ms-2">Plan Another Dispatch</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusStreamList = document.getElementById('dispatchStatusStreamList');
+    const statusPlaceholder = document.getElementById('dispatchStatusPlaceholder');
+    const finalStatusDiv = document.getElementById('dispatchFinalStatus');
+    const finalMessageElem = document.getElementById('dispatchFinalMessage');
+    const dispatchHomeButton = document.getElementById('dispatchHomeButton');
+
+    // Read URLs from data attributes
+    const pageDataElement = document.getElementById('dispatchStatusPageData');
+    const sseUrl = pageDataElement.dataset.sseUrl;
+    const homeUrl = pageDataElement.dataset.homeUrl;
+    const loadingGifUrl = pageDataElement.dataset.loadingGifUrl;
+
+    // Set initial placeholder with loading gif
+    if (statusPlaceholder) {
+        statusPlaceholder.innerHTML = `<img src="${loadingGifUrl}" alt="Loading..." style="width:20px; height:20px; margin-right: 8px;">Initializing dispatch process...`;
+    }
+    if (dispatchHomeButton) {
+        dispatchHomeButton.href = homeUrl; // Set home button URL
+    }
+
+
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+            if (unsafe === null || typeof unsafe === 'undefined') return '';
+            unsafe = String(unsafe);
+        }
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    const eventSource = new EventSource(sseUrl); // Use URL from data attribute
+    console.log("SSE (Dispatch Status): EventSource created for URL: " + sseUrl);
+
+    eventSource.onopen = function() {
+        console.log("SSE (Dispatch Status): Connection opened.");
+        if (statusPlaceholder) statusPlaceholder.innerHTML = `<img src="${loadingGifUrl}" alt="Loading..." style="width:20px; height:20px; margin-right: 8px;">Connection established. Waiting for dispatch updates...`;
+    };
+
+    function addStatusMessage(message, type = 'thought') {
+        if (statusPlaceholder && statusPlaceholder.style.display !== 'none') {
+            statusPlaceholder.style.display = 'none';
+        }
+        const li = document.createElement('li');
+        li.classList.add('mb-1');
+        let prefix = '&raquo;';
+        let textClass = 'text-muted';
+        if (type === 'dispatch_update') {
+            prefix = '&#10004;'; // Check mark
+            textClass = 'text-info';
+        } else if (type === 'error_detail') {
+            prefix = '&#9888;'; // Warning sign
+            textClass = 'text-warning';
+        }
+        li.innerHTML = `<small class="${textClass}">${new Date().toLocaleTimeString()}: ${prefix} ${escapeHtml(message)}</small>`;
+        if (statusStreamList) statusStreamList.appendChild(li);
+        const statusContainer = document.getElementById('dispatchStatusStreamContainer');
+        if (statusContainer) statusContainer.scrollTop = statusContainer.scrollHeight;
+    }
+
+    eventSource.addEventListener('thought', function(event) {
+        console.log("SSE (Dispatch Status): 'thought' event, data:", event.data);
+        const thoughtData = JSON.parse(event.data);
+        addStatusMessage(thoughtData, 'thought');
+    });
+
+    eventSource.addEventListener('dispatch_update', function(event) {
+        console.log("SSE (Dispatch Status): 'dispatch_update' event, data:", event.data);
+        const updateData = JSON.parse(event.data);
+        addStatusMessage(updateData.message || `Status: ${updateData.status}`, 'dispatch_update');
+    });
+
+    eventSource.addEventListener('dispatch_complete', function(event) {
+        console.log("SSE (Dispatch Status): 'dispatch_complete' event, data:", event.data);
+        const resultData = JSON.parse(event.data);
+        addStatusMessage(resultData.message || "Dispatch process completed successfully!", 'dispatch_update');
+        if (finalMessageElem) {
+            finalMessageElem.textContent = resultData.message || "Dispatch confirmed and processed!";
+            finalMessageElem.className = "alert alert-success";
+        }
+        if (finalStatusDiv) finalStatusDiv.style.display = 'block';
+    });
+
+    eventSource.addEventListener('error', function(event) {
+        console.error("SSE (Dispatch Status): 'error' event (or native SSE error):", event);
+        let errorMsg = "An error occurred during the dispatch process.";
+        if (event.data) {
+            try {
+                const errorData = JSON.parse(event.data);
+                errorMsg = errorData.message || errorMsg;
+                addStatusMessage(`Error: ${errorMsg}`, 'error_detail');
+            } catch (e) {
+                addStatusMessage(`Error: Received unparseable error data. ${event.data}`, 'error_detail');
+            }
+        } else {
+             addStatusMessage(errorMsg + " Connection may have been lost.", 'error_detail');
+        }
+
+        if (statusPlaceholder) statusPlaceholder.innerHTML = `<span class="text-danger">Dispatch process encountered an error.</span>`;
+        if (finalMessageElem) {
+            finalMessageElem.textContent = errorMsg;
+            finalMessageElem.className = "alert alert-danger";
+        }
+        if (finalStatusDiv) finalStatusDiv.style.display = 'block';
+    });
+
+    eventSource.addEventListener('stream_end', function(event) {
+        console.log("SSE (Dispatch Status): 'stream_end' event received. Closing connection.");
+        if (eventSource) eventSource.close(); // Check if eventSource exists before closing
+
+        if (statusPlaceholder && statusPlaceholder.style.display !== 'none') {
+            statusPlaceholder.textContent = "Dispatch process stream ended.";
+        }
+        if (finalStatusDiv && finalStatusDiv.style.display === 'none') {
+            if(finalMessageElem) finalMessageElem.textContent = "Process finished."; // Default message if not set by specific event
+            finalStatusDiv.style.display = 'block';
+        }
+        // The flask flash message from the route will appear on next page load,
+        // or you can use JS to show it here if needed before redirect.
+        // For simplicity, a timed redirect after stream_end.
+        if (finalMessageElem && (finalMessageElem.classList.contains('alert-success') || !finalMessageElem.classList.contains('alert-danger'))) {
+            // Only auto-redirect on success or if no explicit error was shown in finalMessageElem
+             setTimeout(() => { if(homeUrl) window.location.href = homeUrl; }, 4000);
+        }
+    });
+
+});
+</script>
+{% endblock %}

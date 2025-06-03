@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}{{ title | default('Customer Details', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 customer-detail-page">
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            Could not load customer details. The customer may not exist or an error occurred.
+        </div>
+        <a href="{{ url_for('customers_list') }}" class="btn btn-primary">Back to Customers List</a>
+    {% elif customer %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">
+                {{ customer.customer_name | default('N/A', true) }}
+            </h1>
+            {# Optional: Add an edit button or other actions for the customer #}
+            {# <a href="{{ url_for('edit_customer_page', customer_id=customer.customer_id) }}" class="btn btn-outline-secondary">Edit Customer</a> #}
+        </div>
+        <hr>
+
+        <div class="row">
+            <div class="col-md-4">
+                <h4>Customer Information</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li><strong>Customer ID:</strong> {{ customer.customer_id | default('N/A', true) }}</li>
+                            <li><strong>Name:</strong> {{ customer.customer_name | default('N/A', true) }}</li>
+                            <li><strong>Industry:</strong> {{ customer.industry_type | default('N/A', true) }}</li>
+                            <li><strong>Region:</strong> {{ customer.region | default('N/A', true) }}</li>
+                            <li><strong>Record Created:</strong> {{ customer.create_time | humanize_datetime if customer.create_time else 'N/A' }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <h4>Equipment Operated/Assigned ({{ assigned_equipment|length }})</h4>
+                {% if assigned_equipment %}
+                    <div class="row row-cols-1 row-cols-lg-2 g-3"> {# Display 1 or 2 cards per row #}
+                        {% for equip_item in assigned_equipment %}
+                            <div class="col">
+                                {# The assigned_equipment items might have fewer fields than equipment_detail #}
+                                {# The render_equipment_card macro should gracefully handle missing fields #}
+                                {# We pass the equip_item which has: equipment_id, serial_number, description, make, model #}
+                                {# It also has assignment_type and assignment_start_date which the macro doesn't directly use but are good for context #}
+                                <div class="card mb-2 shadow-sm"> {# Lighter card for the list view #}
+                                    <div class="card-header bg-light">
+                                        <h6 class="card-title mb-0">
+                                            <a href="{{ url_for('equipment_detail', equipment_id=equip_item.equipment_id) }}" class="text-decoration-none">
+                                                {{ equip_item.make | default('N/A') }} {{ equip_item.model | default('N/A') }}
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted">SN: {{ equip_item.serial_number | default('N/A') }}</small>
+                                    </div>
+                                    <div class="card-body py-2">
+                                        <p class="card-text small description-truncate">{{ equip_item.description | default('No description.') }}</p>
+                                        <p class="card-text small mb-0">
+                                            <strong>Assignment Type:</strong> {{ equip_item.assignment_type | default ('N/A') }}<br>
+                                            <strong>Assigned Since:</strong> {{ equip_item.assignment_start_date | humanize_datetime if equip_item.assignment_start_date else 'N/A' }}
+                                        </p>
+                                    </div>
+                                    <div class="card-footer text-center py-1">
+                                         <a href="{{ url_for('equipment_detail', equipment_id=equip_item.equipment_id) }}" class="btn btn-outline-primary btn-sm">View Full Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-light" role="alert">
+                        No equipment currently assigned to this customer.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ url_for('customers_list') }}" class="btn btn-secondary">&laquo; Back to Customers List</a>
+        </div>
+
+    {% else %}
+        {# This case should ideally be caught by abort(404) in app.py #}
+        <div class="alert alert-warning" role="alert">
+            Customer data could not be loaded or the customer was not found.
+        </div>
+        <a href="{{ url_for('customers_list') }}" class="btn btn-primary">Back to Customers List</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# Add any page-specific JavaScript here if needed #}
+{% endblock %}

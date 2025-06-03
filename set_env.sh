@@ -6,10 +6,10 @@
 
 # --- Configuration ---
 PROJECT_FILE="~/project_id.txt"
-SPANNER_INSTANCE_ID="instavibe-graph-instance"
+SPANNER_INSTANCE_ID="rousefleet-graph-instance"
 SPANNER_DATABASE_ID="graphdb"
 GOOGLE_CLOUD_LOCATION="us-central1"
-REPO_NAME="introveally-repo"
+REPO_NAME="rousefleet-repo"
 MAPKEY_FILE="~/mapkey.txt"
 # ---------------------
 

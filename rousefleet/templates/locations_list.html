@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}{{ title | default('All Service Locations', true) }} - Rouse FleetPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">{{ title | default('Our Service Locations', true) }}</h1>
+        {# Optional: Add a button to add a new location if you implement that functionality #}
+        {# <a href="{{ url_for('add_location_page') }}" class="btn btn-success">Add New Location</a> #}
+    </div>
+    <hr>
+
+    {% if locations %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {# Loop through each location and render its card #}
+            {% for location_item in locations %}
+                <div class="col">
+                    {{ macros.render_location_card(location_item, show_links=True) }}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No service locations found or data could not be loaded.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# Add any page-specific JavaScript here if needed #}
+<script>
+    // Example: console.log("Service locations list page loaded.");
+</script>
+{% endblock %}
