@@ -60,7 +60,6 @@ class HostAgent:
       agent_info.append(json.dumps(ra))
     self.agents = '\n'.join(agent_info)
 
-#REPLACE ME REG AGENT CARD
   def register_agent_card(self, card: AgentCard):
     remote_connection = RemoteAgentConnections(card)
     self.remote_agent_connections[card.name] = remote_connection
@@ -69,23 +68,11 @@ class HostAgent:
     for ra in self.list_remote_agents():
       agent_info.append(json.dumps(ra))
     self.agents = '\n'.join(agent_info)
-#REPLACE ME CREATE AGENT
-  def create_agent(self) -> Agent:
-    return Agent(
-        model="gemini-2.0-flash",
-        name="orchestrate_agent",
-        instruction=self.root_instruction,
-        before_model_callback=self.before_model_callback,
-        description=(
-            "This agent orchestrates the decomposition of the user request into"
-            " tasks that can be performed by the child agents."
-        ),
-        tools=[
-            self.list_remote_agents,
-            self.send_task,
-        ],
-    )
-#REPLACE ME INSTRUCTIONS
+
+
+  #REPLACE ME CREATE AGENT
+
+    
   def root_instruction(self, context: ReadonlyContext) -> str:
       current_agent = self.check_state(context)
       return f"""
