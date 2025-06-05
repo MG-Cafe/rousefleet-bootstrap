@@ -12,5 +12,6 @@ build==1.2.2.post1
 google-genai==1.14.0
 faker
 ./agents/a2a_common-0.1.0-py3-none-any.whl
+deprecated==1.2.18
 
 
